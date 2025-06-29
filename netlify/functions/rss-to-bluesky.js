@@ -38,9 +38,15 @@ async function postNewEntries() {
     const title = item.title?.trim() || '';
     const description = item.contentSnippet?.trim() || item.content?.trim() || '';
     let thumb;
-    if (item.enclosure?.url && item.enclosure.type?.startsWith('image/')) {
+    // Try to extract an image URL from <enclosure> or the HTML description (<img src="...">)
+    const html = item.content || item.description || '';
+    const imgUrl =
+      item.enclosure?.url && item.enclosure.type?.startsWith('image/')
+        ? item.enclosure.url
+        : html.match(/<img[^>]+src=["']([^"']+)["']/i)?.[1];
+    if (imgUrl) {
       try {
-        const resp = await fetch(item.enclosure.url);
+        const resp = await fetch(imgUrl);
         if (resp.ok) {
           const mimeType = resp.headers.get('content-type') || undefined;
           const buffer = Buffer.from(await resp.arrayBuffer());
