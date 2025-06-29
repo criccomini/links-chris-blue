@@ -1,6 +1,6 @@
 # RSS to Bluesky Netlify App
 
-This Netlify app periodically reads an RSS feed and posts new entries to Bluesky—backdating each post to the RSS pubDate and embedding each link as a preview card (including thumbnail, title, and description when available)—using your Bluesky timeline to track what’s already been posted.
+This Netlify app periodically reads an RSS feed and posts new entries to Bluesky—backdating each post to the RSS pubDate and embedding each link as a preview card (including thumbnail, title, and description when available)—using your Bluesky timeline to track what’s already been posted, and limits posting to at most 5 entries per run.
 
 ## Setup
 
@@ -12,5 +12,5 @@ In your Netlify site settings, add the following environment variables:
 
 ## Deployment
 
-Deploy this repository to Netlify. The `rss-to-bluesky` function runs on the schedule defined in `netlify.toml` (default: `@hourly`).
+Deploy this repository to Netlify. The `rss-to-bluesky` function runs on the schedule defined in `netlify.toml` (default: `*/15 * * * *`).
 Adjust the cron schedule in `netlify.toml` as needed.

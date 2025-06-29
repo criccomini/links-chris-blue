@@ -5,6 +5,7 @@ const parser = new Parser();
 const Jimp = require('jimp');
 
 const MAX_THUMB_BYTES = 1_000_000;
+const MAX_POSTS_PER_RUN = 5;
 async function postNewEntries() {
   const rssUrl = process.env.RSS_FEED_URL;
   if (!rssUrl) throw new Error('Missing RSS_FEED_URL environment variable');
@@ -28,7 +29,8 @@ async function postNewEntries() {
     })
     .sort(
       (a, b) => new Date(a.isoDate || a.pubDate).getTime() - new Date(b.isoDate || b.pubDate).getTime()
-    );
+    )
+    .slice(0, MAX_POSTS_PER_RUN);
   if (newItems.length === 0) {
     console.log('No new RSS items to post');
     return;

@@ -3,4 +3,4 @@
 
 [functions]
   [functions.scheduled.rss-to-bluesky]
-    schedule = "@hourly"
+    schedule = "*/15 * * * *"
