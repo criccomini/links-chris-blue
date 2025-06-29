@@ -35,8 +35,8 @@ async function postNewEntries() {
   }
   for (const item of newItems) {
     const link = item.link?.trim() || '';
-    const date = item.pubDate || item.isoDate;
-    const createdAt = date ? new Date(date).toISOString() : undefined;
+    const dateStr = item.isoDate || item.pubDate;
+    const createdAt = dateStr ? new Date(dateStr).toISOString() : undefined;
     const title = item.title?.trim() || '';
     const description = item.contentSnippet?.trim() || item.content?.trim() || '';
     let thumb;
