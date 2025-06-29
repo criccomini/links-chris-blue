@@ -21,6 +21,7 @@ async function postNewEntries() {
   const authorFeed = await agent.getAuthorFeed({ actor: agent.did, limit: 1 });
   const lastPost = authorFeed.data.feed[0];
   const lastTs = lastPost ? new Date(lastPost.post.createdAt).getTime() : 0;
+  console.log('Last bsky post timestamp:', lastTs);
   const newItems = feed.items
     .filter(item => {
       const date = item.isoDate || item.pubDate;
