@@ -1,6 +1,6 @@
 [build]
   functions = "netlify/functions"
 
-[[functions.scheduled]]
-  function  = "rss-to-bluesky"
-  schedule  = "@hourly"
+[functions]
+  [functions.scheduled.rss-to-bluesky]
+    schedule = "@hourly"
