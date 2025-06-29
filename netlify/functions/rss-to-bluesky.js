@@ -35,11 +35,48 @@ async function postNewEntries() {
     const link = item.link?.trim() || '';
     const date = item.pubDate || item.isoDate;
     const createdAt = date ? new Date(date).toISOString() : undefined;
-    const record = { text: link };
-    if (createdAt) {
-      record.createdAt = createdAt;
+    const title = item.title?.trim() || '';
+    const description = item.contentSnippet?.trim() || item.content?.trim() || '';
+    let thumb;
+    if (item.enclosure?.url && item.enclosure.type?.startsWith('image/')) {
+      try {
+        const resp = await fetch(item.enclosure.url);
+        if (resp.ok) {
+          const mimeType = resp.headers.get('content-type') || undefined;
+          const buffer = Buffer.from(await resp.arrayBuffer());
+          const {
+            data: { blob: thumbRef },
+          } = await agent.uploadBlob(buffer, { encoding: mimeType });
+          thumb = thumbRef;
+        } else {
+          console.warn('Unable to fetch thumbnail:', resp.status, resp.statusText);
+        }
+      } catch (err) {
+        console.warn('Failed to fetch/upload thumbnail:', err);
+      }
     }
-    console.log('Posting link to Bluesky:', link, 'at', createdAt);
+
+    const record = {
+      text: '',
+      embed: {
+        $type: 'app.bsky.embed.external',
+        external: {
+          uri: link,
+          title: title || link,
+          description,
+          ...(thumb ? { thumb } : {}),
+        },
+      },
+      createdAt: createdAt || new Date().toISOString(),
+    };
+    console.log(
+      'Posting link embed to Bluesky:',
+      link,
+      title ? `(${title})` : '',
+      thumb ? '(with thumbnail)' : '',
+      'at',
+      record.createdAt
+    );
     await agent.post(record);
   }
 }

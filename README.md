@@ -1,6 +1,6 @@
 # RSS to Bluesky Netlify App
 
-This Netlify app periodically reads an RSS feed and posts new entries to Bluesky—backdating each post to the RSS pubDate and only posting the link—using your Bluesky timeline to track what’s already been posted.
+This Netlify app periodically reads an RSS feed and posts new entries to Bluesky—backdating each post to the RSS pubDate and embedding each link as a preview card (including thumbnail, title, and description when available)—using your Bluesky timeline to track what’s already been posted.
 
 ## Setup
 
