@@ -2,7 +2,9 @@ const Parser = require('rss-parser');
 const { AtpAgent } = require('@atproto/api');
 
 const parser = new Parser();
+const Jimp = require('jimp');
 
+const MAX_THUMB_BYTES = 1_000_000;
 async function postNewEntries() {
   const rssUrl = process.env.RSS_FEED_URL;
   if (!rssUrl) throw new Error('Missing RSS_FEED_URL environment variable');
@@ -38,7 +40,6 @@ async function postNewEntries() {
     const title = item.title?.trim() || '';
     const description = item.contentSnippet?.trim() || item.content?.trim() || '';
     let thumb;
-    // Try to extract an image URL from <enclosure> or the HTML description (<img src="...">)
     const html = item.content || item.description || '';
     const imgUrl =
       item.enclosure?.url && item.enclosure.type?.startsWith('image/')
@@ -50,10 +51,46 @@ async function postNewEntries() {
         if (resp.ok) {
           const mimeType = resp.headers.get('content-type') || undefined;
           const buffer = Buffer.from(await resp.arrayBuffer());
-          const {
-            data: { blob: thumbRef },
-          } = await agent.uploadBlob(buffer, { encoding: mimeType });
-          thumb = thumbRef;
+          if (buffer.byteLength <= MAX_THUMB_BYTES) {
+            const {
+              data: { blob: thumbRef },
+            } = await agent.uploadBlob(buffer, { encoding: mimeType });
+            thumb = thumbRef;
+          } else {
+            try {
+              const image = await Jimp.read(buffer);
+              let width = image.bitmap.width;
+              let quality = 80;
+              let outBuffer;
+              while (true) {
+                outBuffer = await image
+                  .clone()
+                  .resize(width, Jimp.AUTO)
+                  .quality(quality)
+                  .getBufferAsync(Jimp.MIME_JPEG);
+                if (
+                  outBuffer.byteLength <= MAX_THUMB_BYTES ||
+                  (width < 200 && quality <= 30)
+                ) {
+                  break;
+                }
+                width = Math.floor(width * 0.7);
+                quality = Math.max(quality - 10, 30);
+              }
+              if (outBuffer.byteLength <= MAX_THUMB_BYTES) {
+                const {
+                  data: { blob: thumbRef },
+                } = await agent.uploadBlob(outBuffer, { encoding: 'image/jpeg' });
+                thumb = thumbRef;
+              } else {
+                console.warn(
+                  `Resized thumbnail still too large: ${outBuffer.byteLength} bytes, skipping`
+                );
+              }
+            } catch (err) {
+              console.warn('Failed resizing thumbnail:', err);
+            }
+          }
         } else {
           console.warn('Unable to fetch thumbnail:', resp.status, resp.statusText);
         }
